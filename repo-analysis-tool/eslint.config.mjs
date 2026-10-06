@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Uploaded/cloned repositories stored at runtime — not project source.
+    "data/**",
   ]),
 ]);
 

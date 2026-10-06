@@ -118,12 +118,24 @@ export function SidebarNav({ repos }: { repos: SidebarRepo[] }) {
           )}
         </nav>
 
-        <Link
-          href="/repositories"
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-center text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          Manage repositories
-        </Link>
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/compare"
+            className={`rounded-lg border px-3 py-1.5 text-center text-xs font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800 ${
+              pathname === "/compare"
+                ? "border-zinc-400 bg-zinc-200/80 text-zinc-900 dark:border-zinc-500 dark:bg-zinc-700/60 dark:text-zinc-50"
+                : "border-zinc-300 text-zinc-700 dark:text-zinc-300"
+            }`}
+          >
+            Compare repositories
+          </Link>
+          <Link
+            href="/repositories"
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-center text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          >
+            Manage repositories
+          </Link>
+        </div>
       </div>
     </aside>
   );
