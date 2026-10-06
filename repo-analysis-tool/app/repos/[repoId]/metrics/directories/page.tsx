@@ -3,6 +3,7 @@ import Link from "next/link";
 import { analysisOf } from "@/lib/history";
 import { getDirectoryMetricsList, ratio } from "@/lib/metrics";
 import { getRepo, isValidRepoId } from "@/lib/repo-store";
+import { MetricsLegend } from "@/components/metrics/legend";
 import { MetricsShell } from "@/components/metrics/shell";
 import { pageContext } from "@/components/metrics/page-utils";
 import {
@@ -64,6 +65,8 @@ export default async function DirectoriesMetricsPage({
             searchLabel="Path contains"
             searchPlaceholder="substring of the directory path"
           />
+
+          <MetricsLegend />
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             A directory&apos;s metrics are the sums over its immediate files

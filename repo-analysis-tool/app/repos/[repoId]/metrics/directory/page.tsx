@@ -7,6 +7,7 @@ import {
   type MetricFilters,
 } from "@/lib/metrics";
 import { getRepo, isValidRepoId } from "@/lib/repo-store";
+import { MetricsLegend } from "@/components/metrics/legend";
 import { MetricsShell } from "@/components/metrics/shell";
 import { filtersFromParams } from "@/lib/metrics";
 import {
@@ -98,6 +99,8 @@ export default async function DirectoryDetailPage({
             current={query}
             hidden={query}
           />
+
+          <MetricsLegend />
 
           {detail.metrics ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

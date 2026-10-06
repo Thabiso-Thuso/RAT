@@ -3,6 +3,7 @@ import Link from "next/link";
 import { analysisOf } from "@/lib/history";
 import { getFileMetricsList, ratio } from "@/lib/metrics";
 import { getRepo, isValidRepoId } from "@/lib/repo-store";
+import { MetricsLegend } from "@/components/metrics/legend";
 import { MetricsShell } from "@/components/metrics/shell";
 import { pageContext } from "@/components/metrics/page-utils";
 import {
@@ -62,6 +63,8 @@ export default async function FilesMetricsPage({
             searchLabel="Path contains"
             searchPlaceholder="substring of the file path"
           />
+
+          <MetricsLegend />
 
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Per-file sums over the commit set (|H| ={" "}

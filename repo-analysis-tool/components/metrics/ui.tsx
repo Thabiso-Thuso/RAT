@@ -181,6 +181,7 @@ export function SortHeader({
         ? "desc"
         : "asc"
       : defaultOrder;
+  const directionHint = nextOrder === "asc" ? "ascending" : "descending";
   return (
     <th className="px-3 py-2 text-right font-medium first:px-4 last:pr-4">
       <Link
@@ -189,12 +190,22 @@ export function SortHeader({
           order: nextOrder,
           offset: undefined,
         })}
-        className={`inline-flex items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 ${
+        title={`Sort by ${label} (${directionHint}); click again to reverse`}
+        className={`inline-flex cursor-pointer items-center gap-1 hover:text-zinc-900 dark:hover:text-zinc-100 ${
           active ? "text-zinc-900 dark:text-zinc-100" : ""
         }`}
       >
         {label}
-        {active ? (current.order === "asc" ? "▲" : "▼") : null}
+        {active ? (
+          <span aria-hidden>{current.order === "asc" ? "▲" : "▼"}</span>
+        ) : (
+          <span
+            aria-hidden
+            className="text-zinc-300 dark:text-zinc-600"
+          >
+            ⇅
+          </span>
+        )}
       </Link>
     </th>
   );

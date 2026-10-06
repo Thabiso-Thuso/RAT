@@ -19,10 +19,10 @@ export function MetricsShell({
     <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-10">
       <header className="mb-6">
         <Link
-          href="/"
+          href="/repositories"
           className="text-xs text-zinc-500 hover:underline dark:text-zinc-400"
         >
-          ← All repositories
+          ← Manage repositories
         </Link>
         <h1 className="mt-2 flex flex-wrap items-baseline gap-x-3 text-xl font-semibold tracking-tight">
           {repo.name}

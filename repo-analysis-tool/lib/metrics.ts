@@ -440,6 +440,17 @@ async function scanHistory(
           // attributed to the new path but is not a modification.
           if (added > 0 || removed > 0) file.modifications += 1;
         }
+        // H[F] visibility: rename sources are part of the file universe even
+        // when no metrics are attributed to them (pure rename away).
+        if (stat.prevPath !== undefined && stat.prevPath !== stat.path && !files.has(stat.prevPath)) {
+          files.set(stat.prevPath, {
+            added: 0,
+            removed: 0,
+            commits: 0,
+            modifications: 0,
+            binaryCommits: 0,
+          });
+        }
       }
 
       if (collect.dirs) {

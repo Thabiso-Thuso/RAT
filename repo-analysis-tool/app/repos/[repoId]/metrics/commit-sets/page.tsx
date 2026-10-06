@@ -1,6 +1,7 @@
 import { analysisOf } from "@/lib/history";
 import { getRepositoryMetrics } from "@/lib/metrics";
 import { getRepo, isValidRepoId } from "@/lib/repo-store";
+import { MetricsLegend } from "@/components/metrics/legend";
 import { MetricsShell } from "@/components/metrics/shell";
 import { pageContext } from "@/components/metrics/page-utils";
 import {
@@ -60,6 +61,8 @@ export default async function CommitSetsPage({
           </p>
 
           <FilterBar action={action} current={ctx.query} />
+
+          <MetricsLegend />
 
           <SummaryGrid totals={metrics.totals} />
 
