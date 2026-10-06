@@ -214,6 +214,16 @@ export function parseMailmapLines(content: string): MailmapLine[] {
       });
     }
   }
+  // A file ending in "\n" parses to a trailing empty line; dropping it here
+  // keeps appended rules adjacent to the content and line counts stable
+  // across edit cycles. Interior blank lines are preserved.
+  while (
+    lines.length > 0 &&
+    !isMailmapRule(lines[lines.length - 1]) &&
+    lines[lines.length - 1].line.trim() === ""
+  ) {
+    lines.pop();
+  }
   return lines;
 }
 
