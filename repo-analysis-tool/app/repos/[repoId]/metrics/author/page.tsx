@@ -113,6 +113,15 @@ export default async function AuthorDetailPage({
 
           <MetricsLegend />
 
+          <p className="text-xs">
+            <Link
+              href={`/repos/${repoId}/authors`}
+              className="font-medium text-zinc-600 hover:underline dark:text-zinc-300"
+            >
+              Merge identities →
+            </Link>
+          </p>
+
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className={card}>
               <div className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

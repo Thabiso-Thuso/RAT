@@ -354,6 +354,50 @@ export async function listMergedAuthors(
   );
 }
 
+export interface IdentityGroup {
+  canonical: CanonicalAuthor;
+  /** Commit count summed over every merged raw identity. */
+  commits: number;
+  /** Raw identities merged onto the canonical author, count desc. */
+  identities: { name: string; email: string; commits: number }[];
+}
+
+/**
+ * Raw author identities (from history.json) grouped under their canonical
+ * (mailmap-merged) identity — the data behind the author-management view.
+ */
+export async function listAuthorIdentities(
+  repoId: string,
+): Promise<IdentityGroup[]> {
+  const meta = await readHistoryMeta(repoId);
+  if (!meta) {
+    throw new Error("No analyzed history available. Run analysis first.");
+  }
+  const mailmap = await readMailmap(repoDir(repoId));
+
+  const groups = new Map<string, IdentityGroup>();
+  for (const raw of meta.authors) {
+    const canonical = mailmap.resolve(raw.name, raw.email);
+    const key = `${canonical.name} <${canonical.email}>`;
+    let group = groups.get(key);
+    if (!group) {
+      group = { canonical, commits: 0, identities: [] };
+      groups.set(key, group);
+    }
+    group.commits += raw.commits;
+    group.identities.push({ name: raw.name, email: raw.email, commits: raw.commits });
+  }
+  for (const group of groups.values()) {
+    group.identities.sort(
+      (a, b) => b.commits - a.commits || a.name.localeCompare(b.name),
+    );
+  }
+  return [...groups.values()].sort(
+    (a, b) =>
+      b.commits - a.commits || a.canonical.name.localeCompare(b.canonical.name),
+  );
+}
+
 export async function readHistoryMeta(
   repoId: string,
 ): Promise<HistoryMeta | null> {

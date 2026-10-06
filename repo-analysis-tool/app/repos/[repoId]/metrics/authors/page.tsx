@@ -66,6 +66,15 @@ export default async function AuthorsMetricsPage({
 
           <MetricsLegend />
 
+          <p className="text-xs">
+            <Link
+              href={`/repos/${repoId}/authors`}
+              className="font-medium text-zinc-600 hover:underline dark:text-zinc-300"
+            >
+              Manage merging (author identities) →
+            </Link>
+          </p>
+
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
             Canonical authors (after .mailmap merging) of the commit set
             (|H| = {fmt(result.totals.commitCount)} commits): n = commits with

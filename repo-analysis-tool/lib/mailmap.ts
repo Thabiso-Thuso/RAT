@@ -142,3 +142,191 @@ export async function readMailmap(repoPath: string): Promise<Mailmap> {
     return parseMailmap("");
   }
 }
+
+// ---------------------------------------------------------------------------
+// Editable rules (author-merge management UI)
+// ---------------------------------------------------------------------------
+
+/**
+ * One parsed .mailmap mapping. The four fields mirror git's add_mapping
+ * inputs; `line` keeps the original text so rewriting the file preserves
+ * everything the tool did not touch.
+ */
+export interface MailmapRule {
+  /** Replacement name; null keeps the commit's own name. */
+  canonicalName: string | null;
+  /** Replacement email; null keeps the commit's own email. */
+  canonicalEmail: string | null;
+  /** Old (commit) name constraint; null = any name with rawEmail. */
+  rawName: string | null;
+  /** Old (commit) email the rule keys on (always set — form-1 lines key on
+   *  the only email they carry). */
+  rawEmail: string;
+  /** Source line, written back verbatim on save. */
+  line: string;
+}
+
+/** A comment or blank line, preserved verbatim across edits. */
+export interface MailmapComment {
+  line: string;
+}
+
+export type MailmapLine = MailmapRule | MailmapComment;
+
+export function isMailmapRule(line: MailmapLine): line is MailmapRule {
+  return "rawEmail" in line;
+}
+
+/**
+ * Parse .mailmap content into editable lines. Unparseable content is kept as
+ * a comment line so a rewrite never destroys data.
+ */
+export function parseMailmapLines(content: string): MailmapLine[] {
+  const lines: MailmapLine[] = [];
+  for (const rawLine of content.split("\n")) {
+    const line = rawLine.endsWith("\r") ? rawLine.slice(0, -1) : rawLine;
+    if (line.length === 0 || line.startsWith("#")) {
+      lines.push({ line });
+      continue;
+    }
+    const proper = parseNameAndEmail(line);
+    if (!proper) {
+      lines.push({ line });
+      continue;
+    }
+    const old = parseNameAndEmail(proper.rest);
+    if (old) {
+      lines.push({
+        canonicalName: proper.name,
+        canonicalEmail: proper.email,
+        rawName: old.name,
+        rawEmail: old.email,
+        line,
+      });
+    } else {
+      // Form 1: `Name <email>` keys on the email and replaces only the name.
+      lines.push({
+        canonicalName: proper.name,
+        canonicalEmail: null,
+        rawName: null,
+        rawEmail: proper.email,
+        line,
+      });
+    }
+  }
+  return lines;
+}
+
+/**
+ * Render a rule as canonical mailmap syntax, choosing among git's line
+ * forms: full replacement with a name constraint (form 4), re-email (form 2),
+ * name replacement via the proper pair (form 3), and rename-only (form 1,
+ * when the canonical email is absent or equals the raw one).
+ */
+export function serializeMailmapRule(
+  rule: Omit<MailmapRule, "line">,
+): string | null {
+  let proper: string;
+  if (rule.canonicalEmail !== null) {
+    proper =
+      rule.canonicalName !== null
+        ? `${rule.canonicalName} <${rule.canonicalEmail}>`
+        : `<${rule.canonicalEmail}>`;
+  } else if (rule.canonicalName !== null) {
+    // Form 1: only the name is replaced, so the keyed email stands in.
+    proper = `${rule.canonicalName} <${rule.rawEmail}>`;
+  } else {
+    return null; // nothing to replace with — invalid rule
+  }
+  if (rule.rawName !== null) {
+    return `${proper} ${rule.rawName} <${rule.rawEmail}>`;
+  }
+  if (
+    rule.canonicalEmail !== null &&
+    rule.canonicalEmail.toLowerCase() !== rule.rawEmail.toLowerCase()
+  ) {
+    return `${proper} <${rule.rawEmail}>`;
+  }
+  return proper;
+}
+
+const FORBIDDEN = /[<>\n\r]/;
+
+function cleanField(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export interface MailmapRuleInput {
+  canonicalName?: unknown;
+  canonicalEmail?: unknown;
+  rawName?: unknown;
+  rawEmail?: unknown;
+}
+
+/**
+ * Validate API input into a serializable rule. Returns `{ rule }` or
+ * `{ error }`. When no raw email is given, a canonical name + email form a
+ * rename-only rule keyed on the canonical email (mailmap form 1).
+ */
+export function normalizeMailmapRule(
+  input: MailmapRuleInput,
+): { rule: Omit<MailmapRule, "line"> } | { error: string } {
+  const canonicalName = cleanField(input.canonicalName);
+  let canonicalEmail = cleanField(input.canonicalEmail);
+  const rawName = cleanField(input.rawName);
+  let rawEmail = cleanField(input.rawEmail);
+  if (
+    FORBIDDEN.test(canonicalName ?? "") ||
+    FORBIDDEN.test(canonicalEmail ?? "") ||
+    FORBIDDEN.test(rawName ?? "") ||
+    FORBIDDEN.test(rawEmail ?? "")
+  ) {
+    return { error: "Names and emails must not contain <, > or newlines." };
+  }
+  if (!rawEmail) {
+    if (!canonicalEmail || !canonicalName) {
+      return {
+        error:
+          "Give the identity to merge (raw email) and a canonical name and/or email.",
+      };
+    }
+    rawEmail = canonicalEmail;
+    canonicalEmail = null; // rename-only rule
+  }
+  if (!canonicalName && !canonicalEmail) {
+    return {
+      error: "Give a canonical name and/or email for the merged identity.",
+    };
+  }
+  return { rule: { canonicalName, canonicalEmail, rawName, rawEmail } };
+}
+
+/** Editable lines of a repo's .mailmap; empty when the file is absent. */
+export async function readMailmapLines(
+  repoPath: string,
+): Promise<MailmapLine[]> {
+  try {
+    const content = await fs.readFile(
+      path.join(repoPath, MAILMAP_FILE),
+      "utf8",
+    );
+    return parseMailmapLines(content);
+  } catch {
+    return [];
+  }
+}
+
+/** Write a repo's .mailmap from editable lines (rules keep their line text). */
+export async function writeMailmapLines(
+  repoPath: string,
+  lines: MailmapLine[],
+): Promise<void> {
+  const content = lines.map((line) => line.line).join("\n");
+  await fs.writeFile(
+    path.join(repoPath, MAILMAP_FILE),
+    content.length > 0 ? `${content}\n` : "",
+    "utf8",
+  );
+}
