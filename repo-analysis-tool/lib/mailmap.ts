@@ -323,7 +323,17 @@ export async function writeMailmapLines(
   repoPath: string,
   lines: MailmapLine[],
 ): Promise<void> {
-  const content = lines.map((line) => line.line).join("\n");
+  // A file ending in "\n" parses to a trailing empty line; without stripping
+  // it here, every read-modify-write cycle would add one more blank line.
+  const trimmed = [...lines];
+  while (
+    trimmed.length > 0 &&
+    !isMailmapRule(trimmed[trimmed.length - 1]) &&
+    trimmed[trimmed.length - 1].line.trim() === ""
+  ) {
+    trimmed.pop();
+  }
+  const content = trimmed.map((line) => line.line).join("\n");
   await fs.writeFile(
     path.join(repoPath, MAILMAP_FILE),
     content.length > 0 ? `${content}\n` : "",
